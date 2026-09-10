@@ -1,0 +1,4 @@
+a) Both times are nearly identical (~2.000 s), since in both cases main waits for the full 2s task before measuring end
+b) No, join() is called right after start(), so main waits for the thread to finish anyway, no benefit is gained
+c) join() blocks main until the thread finishes, making execution effectively sequential in total elapsed time
+d) Thread creation, stack allocation, OS scheduling/context switch, and join() synchronization overhead so the threaded version is slightly slower than 2s, not faster (in theory)
