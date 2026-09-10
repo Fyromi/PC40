@@ -1,0 +1,4 @@
+a) No
+b) Maybe, because the threads work in parallel, so there could be conflicts between them, but not all the time. I guess it's because the program is very short
+c) Not necessarily, I can create an artificial delay to force an interleaving between the two tasks.
+d) The threads finish too fast for the scheduler to preempt them, so no context switch happens between t1 and t2
