@@ -1,0 +1,4 @@
+a) Sp = T1/Tp, Ep = Sp/p. Speedup roughly linear (Sp≈p), efficiency close to 100%.
+b) The 50 tasks are split across p threads sleeping concurrently, so total time ≈ (50/p)×200ms instead of 50×200ms sequential.
+c) No, sleep_for uses no CPU, it's just waiting. The gain comes from concurrency during the wait, not extra computing power.
+d) With CPU-bound work, speedup would be limited by the number of physical cores: near-linear up to p = core count, then flattening or degrading beyond it due to core contention and context-switch overhead.
