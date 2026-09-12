@@ -1,0 +1,4 @@
+a) It occurred because t1 held mu1 while waiting for mu2, and t2 held mu2 while waiting for mu1, so each thread was blocked waiting for a lock the other one held
+b) It's because all four Coffman conditions held: mutual exclusion, hold-and-wait, no preemption, and circular wait between the two threads
+c) I prevented the deadlock by enforcing a consistent global lock order, so both threads always acquire mu1 before mu2
+d) The trade-off is reduced concurrency, since the two threads now execute their critical sections more sequentially instead of in parallel
