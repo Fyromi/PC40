@@ -1,0 +1,5 @@
+a) theoretically i exepted to find a 0
+b) No, never
+c) i++/i-- are read-modify-write. it's not atomic, so one thread's write can overwrite the other's losing an update
+d) because the mutex protect the opération to avoid the race condition
+e) mutex locking forces threads to wait for each other, serializing access and adding overhead, which slows things down compared to unsynchronized (but incorrect) code
