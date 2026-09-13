@@ -1,0 +1,2 @@
+1) Throughput vs buffer size: throughput rises with buffer size then saturates around capacity=64, because a bigger buffer lets producer/consumer absorb speed differences instead of blocking on every item
+2) Throughput vs thread count: throughput drops as more producers/consumers are added, because they all share one mutex, so extra threads just add lock contention instead of real parallelism
