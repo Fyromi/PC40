@@ -1,0 +1,4 @@
+a) Threads share memory; processes (fork) each get their own separate copy.
+b) All of it: each child has its own private copy of every variable.
+c) Through a pipe, written by the child and read by the parent.
+d) fork() copies the whole process, and pipe I/O adds kernel calls - both cost more than threads.
