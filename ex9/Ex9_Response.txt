@@ -1,5 +1,5 @@
 a) T1, Tp, Sp and Ep were measured for n = 100..1600 (sequential) and n = 200/400/800/1200 x p = 1/2/4/8 (parallel); full data, formulas and charts are in Ex9_Benchmarks.xlsx.
-b) No - Sp stayed between 0.9 and 1.3 across all tested sizes, and Tp sometimes went up when p increased (e.g. n=1200, p=2 slower than p=1).
+b) No. Sp stayed between 0.9 and 1.3 across all tested sizes, and Tp sometimes went up when p increased (e.g. n=1200, p=2 slower than p=1).
 c) 4 logical processors (Intel Core i3-10110U, 2 physical cores with hyper-threading).
 d) fork() process-creation cost, serializing the whole result block through the pipe (write/read syscalls), and contention between processes for the same 2 physical cores and shared cache.
 e) A small matrix fits entirely in cache and finishes almost instantly, so the fixed cost of fork()/pipe/scheduling dwarfs the actual computation - splitting it across processes only adds overhead.
