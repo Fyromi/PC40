@@ -1,0 +1,2 @@
+a) A mutex lets one thread through a section at a time; a barrier lets all threads through, but only once every one of them has arrived.
+b) Example: a physics/numerical simulation running in timesteps, where every thread must finish computing the current timestep before any of them starts the next one.
