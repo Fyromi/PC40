@@ -1,0 +1,4 @@
+Sequential growth: consistent with Θ(n), because doubling n roughly doubles the time.
+Beneficial range for multiprocessing: none found here, because overhead never gets amortized.
+Why parallel is slower: because process/pipe fixed cost outweighs such cheap work.
+Speedup vs p: stays well below 1, because overhead grows faster than useful work.
