@@ -22,7 +22,7 @@
 *.dylib
 *.dll
 *.so.*
-
+*/data/*
 
 # Fortran module files
 *.mod
