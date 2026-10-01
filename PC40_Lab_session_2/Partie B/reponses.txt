@@ -1,0 +1,3 @@
+Measured: median Tseq = 8.77s (runs: 8.25s, 8.77s, 12.88s), test accuracy 86.95% every time. Intel i3-10110U (4 logical cores), g++ 15.2.0, -O2 -std=c++17, MNIST 12000 train / 2000 test, 3 epochs, batch 64.
+
+Why compare against a stable baseline: Speedup is a ratio (T1/Tp), so if the sequential time changes between measurements, you can't tell whether a difference later comes from adding threads or just from noise in the baseline itself. Keeping the dataset, epochs, batch size and machine identical guarantees that any difference measured afterward is really caused by the parallelization.

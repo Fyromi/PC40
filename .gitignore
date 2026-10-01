@@ -38,6 +38,9 @@
 *.exe
 *.out
 *.app
+PC40_Lab_session_2/cpp/nn_sequential
+PC40_Lab_session_2/cpp/nn_multithreaded
+PC40_Lab_session_2/cpp/nn_tsan
 
 # Build directories
 build/

@@ -1,0 +1,6 @@
+Shared read-only during computation: weights/biases, input samples, labels - every worker reads them, nobody writes while gradients are being computed.
+Thread-private: each worker's local gradient and local loss/correct counts - only that worker touches them.
+Shared writable, but written only once after all workers finish: the combined gradient and the updated weights.
+
+Partitioning (batch 64, P=4), 16 samples each: T0 from 0 to 16, T1 from 16 to 32, T2 from 32 to 48, T3 from 48 to 64.
+General rule for any B/P: base = B/P, extra = B%P, give one extra sample to each of the first "extra" workers, and track a running start index so every sample is covered exactly once.

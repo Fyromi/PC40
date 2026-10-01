@@ -1,0 +1,13 @@
+1) Data loading: Reads the MNIST images and labels from disk and turns them into numbers the network can use. A fake "synthetic" dataset is also available to test the program without downloading anything.
+
+2) Model initialisation: Creates the network's weights and biases and fills them with small random starting values. This only runs once, when the network is created.
+
+3) Forward pass: Takes one image and runs it through the network, step by step, to produce a prediction. It's literally the network guessing which digit it's looking at.
+
+4) Backward pass: Looks at how wrong that prediction was and works out, for every weight, how much it contributed to the mistake. These contributions are added up into the gradient.
+
+5) Mini-batch loop: Goes through every image in the current batch and runs the forward+backward pass on each one. This is the part we need to parallelize, since each image is handled completely independently of the others.
+
+6) Weight update: Once the whole batch has been processed, the weights are adjusted a single time based on everything learned from that batch. It only happens after every image in the batch is done.
+
+7) Evaluation: Checks how well the trained network performs on data it has never seen, by comparing its predictions to the real answers.

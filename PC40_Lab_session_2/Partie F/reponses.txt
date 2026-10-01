@@ -1,0 +1,7 @@
+I measured the three versions on the same dataset with P=4. The sequential version takes about 8.77 seconds, the unsafe version from Part E runs in 4 to 6.5 seconds but gives a different, wrong result every time, and the mutex version runs in about 3.2 seconds and now gives basically the same result every run (the tiny difference between 141.285 and 141.297 just comes from floating point additions happening in a different order, not from a bug).
+
+The lock protects the moment where a thread adds its sample's contribution to the shared gradient and loss accumulators, so that addition is never interrupted by another thread doing the same thing at the same time.
+
+Since each thread only locks the mutex for that short addition and does all the expensive forward/backward computation before locking anything, threads almost never have to wait on each other, so the lock barely slows things down here.
+
+If the lock covered the whole computation of a sample, every thread would basically run one after another, so adding more threads wouldn't speed anything up. And if the lock were taken for every single scalar update instead, the program would spend more time locking and unlocking than actually computing. Both extremes kill performance, just for opposite reasons.

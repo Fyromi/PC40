@@ -1,0 +1,3 @@
+Evidence: at P=1 the weight checksum is identical on every run (141.285, 141.285, 141.285). At P=4, same data and same seed, it changes on every run instead (141.099, 141.564, 141.124, 141.351, 141.125), and ThreadSanitizer confirms a data race directly on sample_grad(), on both the loss accumulator and the gradient vector g2.
+
+Why a race may exist even if one run appears correct: x += a is a read-modify-write, so if two threads do it on the same memory at the same time, one thread's update can get silently overwritten by the other. Whether that actually happens depends on the OS scheduler's timing, which changes every run - so one run looking fine proves nothing.

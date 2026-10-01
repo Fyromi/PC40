@@ -19,11 +19,14 @@
 #include <chrono>
 #include <cmath>
 #include <cstdint>
+#include <cstdlib>
 #include <fstream>
 #include <iostream>
 #include <random>
 #include <stdexcept>
+#include <mutex>
 #include <string>
+#include <thread>
 #include <vector>
 
 using std::vector;
@@ -171,7 +174,8 @@ struct NN {
     }
 
     // Training loop: epochs x mini-batches.
-    void train(const Data& d, int epochs, int bs, float lr) {
+    // P = number of worker threads used to process each mini-batch.
+    void train(const Data& d, int epochs, int bs, float lr, int P) {
         for (int e = 0; e < epochs; e++) {
             float L = 0;   // epoch loss
             int ok = 0;    // epoch correct count
@@ -183,11 +187,45 @@ struct NN {
                 // Batch gradient accumulators, zeroed for every batch.
                 vector<float> g1(W1.size()), gb1(H), g2(W2.size()), gb2(C);
 
-                // ---- [5] Mini-batch accumulation --------------------------
-                // Each sample contributes independently to the same
-                // accumulators. THIS is the loop to parallelise.
-                for (int i = s; i < e2; i++)
-                    sample_grad(&d.x[(size_t)i * d.d], d.y[i], g1, gb1, g2, gb2, L, ok);
+                // ---- [5] Mini-batch accumulation, P workers ---------------
+                // Part F: split the batch into P contiguous slices (same
+                // base/extra scheme as Part C). Each worker computes every
+                // sample's gradient into a small LOCAL buffer (unlocked -
+                // this is the expensive forward/backward work), then locks
+                // mtx only to merge that one sample's contribution into the
+                // shared g1/gb1/g2/gb2/L/ok. The lock protects exactly one
+                // invariant: a merge is never interrupted midway, so the
+                // shared accumulators always equal the sum of a whole
+                // number of completed sample contributions.
+                int base = n / P, extra = n % P;
+                int cursor = s;
+                vector<std::thread> workers;
+                std::mutex mtx;
+                for (int w = 0; w < P; w++) {
+                    int count = base + (w < extra ? 1 : 0);
+                    int start = cursor, end = cursor + count;
+                    cursor = end;
+                    workers.emplace_back([&, start, end]() {
+                        vector<float> lg1(W1.size()), lgb1(H), lg2(W2.size()), lgb2(C);
+                        for (int i = start; i < end; i++) {
+                            std::fill(lg1.begin(), lg1.end(), 0.f);
+                            std::fill(lgb1.begin(), lgb1.end(), 0.f);
+                            std::fill(lg2.begin(), lg2.end(), 0.f);
+                            std::fill(lgb2.begin(), lgb2.end(), 0.f);
+                            float sLoss = 0; int sOk = 0;
+                            sample_grad(&d.x[(size_t)i * d.d], d.y[i], lg1, lgb1, lg2, lgb2, sLoss, sOk);
+
+                            std::lock_guard<std::mutex> lock(mtx);
+                            for (size_t k = 0; k < lg1.size(); k++) g1[k] += lg1[k];
+                            for (size_t k = 0; k < lgb1.size(); k++) gb1[k] += lgb1[k];
+                            for (size_t k = 0; k < lg2.size(); k++) g2[k] += lg2[k];
+                            for (size_t k = 0; k < lgb2.size(); k++) gb2[k] += lgb2[k];
+                            L += sLoss;
+                            ok += sOk;
+                        }
+                    });
+                }
+                for (std::thread& t : workers) t.join();
 
                 // ---- [6] Weight update ------------------------------------
                 // Performed once per batch, AFTER the full batch gradient
@@ -227,13 +265,32 @@ struct NN {
     }
 };
 
+// Simple checksum (sum of all weights) to compare runs for Part E/I.
+static double checksum(const NN& nn) {
+    double s = 0;
+    for (float v : nn.W1) s += v;
+    for (float v : nn.b1) s += v;
+    for (float v : nn.W2) s += v;
+    for (float v : nn.b2) s += v;
+    return s;
+}
+
 // ---------------------------------------------------------------------------
 // main
 // ---------------------------------------------------------------------------
 int main(int argc, char** argv) {
     try {
-        bool syn = argc > 1 && std::string(argv[1]) == "--synthetic";
-        std::string root = (argc > 1 && !syn) ? argv[1] : "../data";
+        bool syn = false;
+        std::string root = "../data";
+        int threads = 1;
+
+        for (int i = 1; i < argc; i++) {
+            std::string a = argv[i];
+            if (a == "--synthetic") syn = true;
+            else if (a == "--threads" && i + 1 < argc) threads = std::atoi(argv[++i]);
+            else root = a;
+        }
+        if (threads < 1) threads = 1;
 
         Data tr = syn ? synthetic(2000)
                       : load_idx(root + "/train-images-idx3-ubyte",
@@ -244,10 +301,12 @@ int main(int argc, char** argv) {
 
         NN nn;
         auto t = std::chrono::steady_clock::now();
-        nn.train(tr, /*epochs=*/3, /*batch size=*/64, /*learning rate=*/0.08f);
+        nn.train(tr, /*epochs=*/3, /*batch size=*/64, /*learning rate=*/0.08f, threads);
         double sec = std::chrono::duration<double>(std::chrono::steady_clock::now() - t).count();
 
-        std::cout << "Test accuracy: " << nn.accuracy(te) << "%\n"
+        std::cout << "Threads: " << threads << "\n"
+                  << "Test accuracy: " << nn.accuracy(te) << "%\n"
+                  << "Weight checksum: " << checksum(nn) << "\n"
                   << "Training time: " << sec << " s\n";
     } catch (const std::exception& e) {
         std::cerr << e.what() << "\nRun data/download_mnist.py or use --synthetic\n";
